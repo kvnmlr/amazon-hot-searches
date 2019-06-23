@@ -4,8 +4,8 @@
                              absolute overflow app temporary>
             <v-container>
                 <h2>Theme</h2>
-                <v-switch v-model="dark" primary label="Dark"></v-switch>
-                <v-divider style="margin: 20px"></v-divider>
+                <v-switch v-model="dark" label="Dark" color="#FEBD69"></v-switch>
+                <v-divider style="margin-bottom: 15px"></v-divider>
                 <h2>Categories</h2>
                 <v-layout row wrap>
                     <v-flex xs12>
@@ -15,26 +15,33 @@
                                 <h3>{{category.title}}</h3>
                             </div>
                             <v-checkbox v-else :disabled="(!category.exclusive && disableRegularCategories)"
-                                        v-model="selectedCategories" :label="category.name" color="orange"
+                                        v-model="selectedCategories" :label="category.name"
+                                        :color="dark ? '#FEBD69' : '#232F3F'"
                                         hide-details :value="category.alias" @change="getHotSearches(category)">
                             </v-checkbox>
                         </div>
                     </v-flex>
                 </v-layout>
+                <v-divider style="margin: 15px"></v-divider>
+                <span>
+                    <v-btn flat @click="() => {dialog = true; primaryDrawer.model = false;}">About</v-btn>
+                    <v-btn href="https://github.com/kvnmlr/amazon-hot-searches" target="_blank" flat>Source</v-btn>
+                </span>
             </v-container>
         </v-navigation-drawer>
 
         <v-content :class="dark ? 'main-dark' : 'main-light'">
             <v-container fluid>
-                <v-btn style="z-index: 2" fab light small color="white" @click.stop="primaryDrawer.model = !primaryDrawer.model">
+                <v-btn style="z-index: 2" fab light small color="white"
+                       @click.stop="primaryDrawer.model = !primaryDrawer.model">
                     <v-icon dark>{{ primaryDrawer.model ? 'arrow_back' : 'arrow_forward' }}</v-icon>
                 </v-btn>
 
                 <v-container style="margin-top: -50px;"
-                             v-if="this.results.length > 8 && this.resultsReady && !this.scheduleRefresh" bg fill-height
+                             v-if="this.results.length > 8 && this.resultsReady && !this.scheduleRefresh" fluid fill-height fill-width
                              grid-list-md>
                     <v-layout row wrap align-center>
-                        <v-flex v-for="res in results.slice(0, 8)" v-bind:key="res.text" xs6 md3>
+                        <v-flex v-for="(res, i) in results.slice(0, 8)" v-bind:key="i" xs12 sm12 md6 lg3>
                             <keyword-panel v-bind:keywords="results"></keyword-panel>
                         </v-flex>
                     </v-layout>
@@ -49,7 +56,7 @@
                 <v-layout v-else column wrap align-center justify-center class="text-xs-center"
                           style="margin-top: 200px;">
                     <v-layout row>
-                        <v-progress-circular :size="100" :width="10" color="white" indeterminate
+                        <v-progress-circular :size="100" :width="10" color="#FEBD69" indeterminate
                         ></v-progress-circular>
                     </v-layout>
                     <v-layout row>
@@ -59,15 +66,51 @@
                 </v-layout>
             </v-container>
         </v-content>
+
+        <v-dialog v-model="dialog" width="500">
+            <v-card light>
+                <v-card-title dark class="headline drawer-dark white--text" primary-title>
+                    About AMZ Hot Searches
+                </v-card-title>
+
+                <v-card-text>
+                    <p class="body-2">This website is developed as a personal project by a coding enthusiast and
+                        Amazon fan. </p>
+                    <p class="body-1">To retrieve the search queries, public Amazon APIs are used.
+                        The service is neither developed or hosted by Amazon,
+                        nor is it property of Amazon or any of its subsidiaries. The search queries are based on user
+                        interest and are no paid ads. No affiliate links are used. Amazon Alexa queries are not
+                        based on actual spoken queries and are only fictional and for entertainment purpose.</p>
+                    <p class="body-1">
+                        <b>Contact</b><br>
+                        Kevin Müller<br>
+                        kevin.mueller@gmail.com<br>
+                        <a href="https://github.com/kvnmlr" target="_blank" style="text-decoration: none">My GitHub</a>
+                        <br>
+                        <a href="https://www.linkedin.com/in/kevin-m%C3%BCller/" target="_blank"
+                           style="text-decoration: none">LinkedIn</a>
+                    </p>
+                    <p class="body-1">
+                        <b>Support</b><br>
+                        <v-icon small>star</v-icon>&nbsp;<a href="https://github.com/kvnmlr/amazon-hot-searches"
+                                                            style="text-decoration: none"
+                                                            target="_blank">Star the repository on GitHub</a><br>
+                        <v-icon small>favorite</v-icon>&nbsp;<a href="https://github.com/kvnmlr"
+                                                                style="text-decoration: none"
+                                                                target="_blank">Become a GitHub Sponsor</a><br></p>
+                </v-card-text>
+            </v-card>
+        </v-dialog>
+
         <v-footer :class="dark ? 'drawer-dark' : 'drawer-light'" app>
-            <span class="px-3">&copy; AMZ Hot Searches {{ new Date().getFullYear() }}</span>
+            <span class="px-3">&copy; AMZ Hot Searches {{ new Date().getFullYear() }},<a
+                    style="color: white; text-decoration: none" @click="dialog = true"> About</a> </span>
         </v-footer>
     </v-app>
 </template>
 
 <script>
     import KeywordPanel from './components/KeywordPanel'
-    import alexaProvider from './alexaProvider'
     import Vue from 'vue'
     import Vuetify from 'vuetify'
     import axios from "axios";
@@ -79,8 +122,9 @@
             KeywordPanel: KeywordPanel
         },
         data: () => ({
+            dialog: false,
             disableRegularCategories: false,
-            disableAllCategories: false,
+            refreshOngoing: false,
             scheduleRefresh: false,
             resultsReady: false,
             results: [],
@@ -163,6 +207,8 @@
             },
         }),
         mounted() {
+            console.log('%cHey developers! Check out the repository:\nhttps://github.com/kvnmlr/amazon-hot-searches ', 'color: #FEBD69; font-size: 14pt;');
+
             axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
             axios.defaults.headers.post['Content-Type'] = 'application/json;charset=utf-8';
             axios.defaults.headers.post['Access-Control-Allow-Origin'] = '*';
@@ -188,62 +234,13 @@
                 setTimeout(this.checkForRefresh, 500);
             },
             getHotSearches(category) {
-                if (this.disableAllCategories) {
+                // Currently, a refresh is ongoing, don't continue but schedule another refresh
+                if (this.refreshOngoing) {
                     this.scheduleRefresh = true;
                     return;
                 }
-                if (this.selectedCategories.length > 0) {
-                    this.disableAllCategories = true;
-                }
-                this.results = [];
-                const urlBase = 'complete?client=amazon-search-ui&mkt=1';
 
-                this.resultsReady = false;
-                this.loadingProgress = 0;
-                let goalLength = this.selectedCategories.length * this.queries.length;
-                let takeHalf = goalLength > 100;
-                if (takeHalf) {
-                    goalLength /= 2;
-                }
-
-                this.selectedCategories.slice().forEach(alias => {
-                    this.queries.forEach((query, i) => {
-                        if (this.scheduleRefresh || (takeHalf && i % 2 === 0)) {
-                            return;
-                        }
-                        const url = urlBase + '&search-alias=' + alias + '&q=' + query;
-                        axios.get(url).then(response => {
-                            const data = response.data;
-                            if (data[0] === query && data.length > 1) {
-                                data[1].slice(0, 1).forEach(res => {
-                                    if (!this.results.includes(res)) {
-                                        let category = this.categories.filter((c) => c.alias === alias)[0].name;
-                                        if (i % 15 === 0) {
-                                            this.results.push({
-                                                text: alexaProvider.getRandomCommand(),
-                                                category: "Alexa Conversations",
-                                                color: Math.floor(Math.random() * 10),
-                                                alexa: true,
-                                            });
-                                        }
-
-                                        this.results.splice(Math.floor(Math.random() * this.results.length), 0, {
-                                            text: res,
-                                            category: category,
-                                            color: Math.floor(Math.random() * 10)
-                                        })
-                                    }
-                                });
-                            }
-                            ++this.loadingProgress;
-                            if (this.loadingProgress === goalLength) {
-                                this.resultsReady = true;
-                                this.disableAllCategories = false;
-                            }
-                        })
-                    });
-                });
-
+                // If an exclusive category is selected, all other categories should be unselected and disabled
                 if (category && category.exclusive) {
                     if (this.selectedCategories.includes(category.alias)) {
                         this.disableRegularCategories = true;
@@ -259,6 +256,56 @@
                         }
                     });
                 }
+
+
+                if (this.selectedCategories.length > 0) {
+                    this.refreshOngoing = true;
+                }
+                this.results = [];          // clear all queries
+                this.resultsReady = false;  // show the loading indicator
+                this.loadingProgress = 0;   // keep track of finished API requests
+
+                const urlBase = 'complete?client=amazon-search-ui&mkt=1';
+
+                // determine how many requests should be made in total.
+                // If the number exceeds 100, only every other letter is taken
+                let goalLength = this.selectedCategories.length * this.queries.length;
+                let takeHalf = goalLength > 100;
+                if (takeHalf) {
+                    goalLength /= 2;
+                }
+
+                // For each category and for each letter, make an API request and add the best two result queries
+                this.selectedCategories.slice().forEach(alias => {
+                    this.queries.forEach((query, i) => {
+                        if (this.scheduleRefresh || (takeHalf && i % 2 === 0)) {
+                            return;
+                        }
+                        const url = urlBase + '&search-alias=' + alias + '&q=' + query;
+                        axios.get(url).then(response => {
+                            const data = response.data;
+                            if (data[0] === query && data.length > 1) {
+                                data[1].slice(0, 2).forEach(res => {
+                                    if (!this.results.includes(res)) {
+                                        let category = this.categories.filter((c) => c.alias === alias)[0].name;
+                                        this.results.splice(Math.floor(Math.random() * this.results.length), 0, {
+                                            text: res,
+                                            category: category,
+                                            color: Math.floor(Math.random() * 10)
+                                        })
+                                    }
+                                });
+                            }
+                            ++this.loadingProgress;
+
+                            // Check if all requests are done
+                            if (this.loadingProgress >= goalLength) {
+                                this.resultsReady = true;
+                                this.refreshOngoing = false;
+                            }
+                        })
+                    });
+                });
             }
         }
     }
@@ -275,6 +322,10 @@
 
     .drawer-dark {
         background-color: #232F3F !important;
+    }
+
+    .dialog-mellow {
+        background-color: #FEBD69 !important;
     }
 
     .drawer-light {
