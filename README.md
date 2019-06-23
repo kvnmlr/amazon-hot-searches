@@ -1,4 +1,7 @@
-# amazon-hot-searches
+# AMZ Hot Searches
+Visualizer for trending Amazon search queries
+
+<img src="https://github.com/kvnmlr/amazon-hot-searches/blob/master/public/screenshot.png" width="300" />
 
 ## Project setup
 ```
@@ -15,15 +18,7 @@ npm run serve
 npm run build
 ```
 
-### Run your tests
-```
-npm run test
-```
-
 ### Lints and fixes files
 ```
 npm run lint
 ```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).

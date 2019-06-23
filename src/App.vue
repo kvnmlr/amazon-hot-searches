@@ -38,7 +38,8 @@
                 </v-btn>
 
                 <v-container style="margin-top: -50px;"
-                             v-if="this.results.length > 8 && this.resultsReady && !this.scheduleRefresh" fluid fill-height fill-width
+                             v-if="this.results.length > 8 && this.resultsReady && !this.scheduleRefresh" fluid
+                             fill-height fill-width
                              grid-list-md>
                     <v-layout row wrap align-center>
                         <v-flex v-for="(res, i) in results.slice(0, 8)" v-bind:key="i" xs12 sm12 md6 lg3>
