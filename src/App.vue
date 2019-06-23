@@ -1,6 +1,7 @@
 <template>
     <v-app id="sandbox" :dark="dark">
-        <v-navigation-drawer class="header"
+
+        <v-navigation-drawer :class="dark ? 'drawer-dark' : 'drawer-light'"
                              v-model="primaryDrawer.model"
                              :permanent="primaryDrawer.type === 'permanent'"
                              :temporary="primaryDrawer.type === 'temporary'"
@@ -10,55 +11,68 @@
                              absolute
                              overflow
                              app>
-            <v-toolbar flat>
-                <v-list>
-                    <v-list-tile>
-                        <v-list-tile-title class="title">
-                            Amazon Hot Searches
-                        </v-list-tile-title>
-                    </v-list-tile>
-                </v-list>
-            </v-toolbar>
             <v-container>
-                <h2>Scheme</h2>
+                <h2>Theme</h2>
                 <v-switch v-model="dark" primary label="Dark"></v-switch>
-                <v-divider style="margin: 20px;"></v-divider>
+                <v-divider style="margin: 20px"></v-divider>
                 <h2>Categories</h2>
                 <v-layout row wrap>
                     <v-flex xs12>
-                        <v-checkbox v-for="(category) in categories" v-bind:key="category.name"
-                                    v-model="selectedCategories"
-                                    :label="category.name"
-                                    color="orange"
-                                    hide-details
-                                    :value="category.alias"
-                        >
-                        </v-checkbox>
-                        {{ selectedCategories.length }}
-                        {{ selectedCategories }}
-
+                        <div v-for="category in categories" v-bind:key="category.name">
+                            <div v-if="category.divider">
+                                <br>
+                                <h3>{{category.title}}</h3>
+                            </div>
+                            <v-checkbox v-else :disabled="!category.exclusive && disableRegularCategories"
+                                        v-model="selectedCategories"
+                                        :label="category.name"
+                                        color="orange"
+                                        hide-details
+                                        :value="category.alias"
+                                        @change="getHotSearches(category)">
+                            </v-checkbox>
+                        </div>
                     </v-flex>
                 </v-layout>
             </v-container>
         </v-navigation-drawer>
-        <v-toolbar class="header" :clipped-left="primaryDrawer.clipped" app absolute>
-            <v-toolbar-side-icon
-                    v-if="primaryDrawer.type !== 'permanent'"
-                    @click.stop="primaryDrawer.model = !primaryDrawer.model"
-            ></v-toolbar-side-icon>
-            <v-toolbar-title>Vuetify</v-toolbar-title>
-        </v-toolbar>
-        <v-content class="main">
-            <v-container fluid>
 
-                <v-layout row wrap v-if="this.results.length > 8">
+        <v-content :class="dark ? 'main-dark' : 'main-light'">
+            <v-container fluid>
+                <v-btn fab light small color="white" @click.stop="primaryDrawer.model = !primaryDrawer.model">
+                    <v-icon dark>{{ primaryDrawer.model ? 'arrow_back' : 'arrow_forward' }}</v-icon>
+
+                </v-btn>
+                <v-layout row wrap v-if="this.results.length > 8 && this.resultsReady">
                     <v-flex v-for="res in results.slice(0, 8)" v-bind:key="res.text" xs3>
                         <keyword-panel v-bind:keywords="results"></keyword-panel>
                     </v-flex>
                 </v-layout>
+                <v-layout v-else-if="this.selectedCategories.length === 0" column wrap align-center justify-center
+                          class="text-xs-center" style="margin-top: 200px;">
+                    <v-layout row>
+                        <p class="text-xs-center headline"><br><br>Please select at least one category</p>
+                    </v-layout>
+                </v-layout>
+
+                <v-layout v-else column wrap align-center justify-center class="text-xs-center"
+                          style="margin-top: 200px;">
+                    <v-layout row>
+                        <v-progress-circular
+                                :size="70"
+                                :width="7"
+                                color="white"
+                                indeterminate
+                        ></v-progress-circular>
+                    </v-layout>
+                    <v-layout row>
+                        <p class="text-xs-center headline"><br><br>Looking for Hot Searches</p>
+                    </v-layout>
+
+                </v-layout>
             </v-container>
         </v-content>
-        <v-footer :inset="footer.inset" app>
+        <v-footer :class="dark ? 'drawer-dark' : 'drawer-light'" app>
             <span class="px-3">&copy; {{ new Date().getFullYear() }}</span>
         </v-footer>
     </v-app>
@@ -77,34 +91,91 @@
             KeywordPanel: KeywordPanel
         },
         data: () => ({
+            disableRegularCategories: false,
+            resultsReady: false,
             results: [],
-            queries: ['a'],
-            selectedCategories: ['digital-text'],
+            queries: [],
+            selectedCategories: [],
             categories: [
                 {
+                    name: 'Deals',
+                    alias: 'deals-intl-ship',
+                    value: false,
+                    exclusive: true,
+                },
+                {
+                    name: 'All Departments',
+                    alias: 'aps',
+                    value: false,
+                    exclusive: true,
+                },
+                {
+                    title: 'Books',
+                    divider: true
+                },
+                {
                     name: 'Books',
+                    alias: 'stripbooks-intl-ship',
+                    value: false
+                },
+                {
+                    name: 'Kindle Store',
                     alias: 'digital-text',
+                    value: false
+                },
+                {
+                    title: 'Music',
+                    divider: true
+                },
+                {
+                    name: 'Music, CDs & Vinyl',
+                    alias: 'music-intl-ship',
                     value: true
                 },
                 {
-                    name: 'Electronics',
-                    alias: 'electronics-intl-ship',
+                    name: 'Digital Music',
+                    alias: 'digital-music',
+                    value: true
+                },
+                {
+                    title: 'Video',
+                    divider: true
+                },
+                {
+                    name: 'Prime Video',
+                    alias: 'instant-video',
                     value: false
-                }
+                },
+                {
+                    name: 'Movies & TV',
+                    alias: 'movies-tv-intl-ship',
+                    value: false
+                },
+                {
+                    title: 'Games',
+                    divider: true
+                },
+                {
+                    name: 'Video Games',
+                    alias: 'videogames-intl-ship',
+                    value: false
+                },
+                {
+                    name: 'Toys & Games',
+                    alias: 'toys-and-games-intl-ship',
+                    value: false
+                },
             ],
             dark: true,
             drawers:
                 ['Default (no property)', 'Permanent', 'Temporary'],
             primaryDrawer: {
-                model: null,
-                type: 'temporary',
+                model: false,
+                type: '',
                 clipped: false,
                 floating: false,
                 mini: false
             },
-            footer: {
-                inset: false
-            }
         }),
         mounted() {
             axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
@@ -112,23 +183,56 @@
             axios.defaults.headers.post['Access-Control-Allow-Origin'] = '*';
             axios.defaults.baseURL = 'https://cors-anywhere.herokuapp.com/http://completion.amazon.com/search';
 
+            this.selectedCategories = this.categories.filter(c => !c.divier && c.value).map(c => c.alias);
+
+            for (let i = 0; i < 26; i++) {
+                const letter = (i + 10).toString(36);
+                this.queries.push(letter);
+            }
+
             this.getHotSearches();
         },
 
         methods: {
-            getHotSearches() {
+            getHotSearches(category) {
+                if (category && category.exclusive) {
+                    if (this.selectedCategories.includes(category.alias)) {
+                        this.disableRegularCategories = true;
+                        this.selectedCategories = [category.alias];
+                    } else {
+                        this.selectedCategories = [];
+                        this.disableRegularCategories = false;
+                    }
+                } else {
+                    this.selectedCategories.forEach((c, i) => {
+                        if (this.categories.filter((cat) => cat.alias === c && cat.exclusive).length > 0) {
+                            this.selectedCategories.splice(i, 1)
+                        }
+                    });
+                }
+
+
+                this.results = [];
                 const urlBase = 'complete?client=amazon-search-ui&mkt=1';
+
+                this.resultsReady = false;
+                let i = 0;
                 this.selectedCategories.forEach(alias => {
                     this.queries.forEach(query => {
                         const url = urlBase + '&search-alias=' + alias + '&q=' + query;
                         axios.get(url).then(response => {
+                            ++i;
+                            if (i === this.selectedCategories.length * this.queries.length) {
+                                this.resultsReady = true;
+                            }
                             const data = response.data;
                             if (data[0] === query && data.length > 1) {
-                                data[1].forEach(res => {
+                                data[1].slice(0, 1).forEach(res => {
                                     if (!this.results.includes(res)) {
-                                        this.results.push({
+                                        let category = this.categories.filter((c) => c.alias === alias)[0].name;
+                                        this.results.splice(Math.floor(Math.random() * this.results.length), 0, {
                                             text: res,
-                                            category: alias,
+                                            category: category,
                                             color: Math.floor(Math.random() * 10)
                                         })
                                     }
@@ -143,11 +247,19 @@
 </script>
 
 <style>
-    .main {
+    .main-light {
         background-color: #EAEDED;
     }
 
-    .header {
-        background-color: #232F3F;
+    .main-dark {
+        background-color: #131A22;
+    }
+
+    .drawer-dark {
+        background-color: #232F3F !important;
+    }
+
+    .drawer-light {
+        background-color: #FFFFFF !important;
     }
 </style>

@@ -1,23 +1,28 @@
 <template>
     <v-container>
         <v-card style="padding: 20px; min-height: 320px; max-height: 320px;"
+                :href="'https://www.amazon.com/s?k='+keywords[keyword].text"
+                target="_blank"
+                hover
                 :light="(keywords[keyword].color % colors.length) < 1"
+                :dark="(keywords[keyword].color % colors.length) >= 1"
                 :class="'mx-auto elevation-0 ' + colors[keywords[keyword].color % colors.length]" max-width="400">
-            <v-card-text style="min-height: 200px;" class="display-2 font-weight-bold">
-                {{ keywords[keyword].text.slice(0, typeWriterIndex) }}|
+            <v-card-text style="min-height: 220px;" class="display-2 font-weight-bold">
+                {{ keywords[keyword].text.slice(0, typeWriterIndex) }}
+                <!--{{ Math.floor(new Date().getMilliseconds() / 100) % 2 === 0 ? '|' : '' }}-->
             </v-card-text>
 
             <v-card-actions>
                 <v-list-tile class="grow">
                     <v-layout align-center>
-                        {{ keywords[keyword].category }}
+                        <p class="text-xs-center" style="margin-top: 30px;">In <b>{{ keywords[keyword].category }}</b></p>
                     </v-layout>
-                    <v-layout align-center justify-end>
+                    <!--<v-layout align-center justify-end>
                         <v-btn light :href="'https://www.amazon.com/s?k='+keywords[keyword].text"
                                class="subheading gradient-grey">
                             Seach!
                         </v-btn>
-                    </v-layout>
+                    </v-layout>-->
                 </v-list-tile>
             </v-card-actions>
         </v-card>
@@ -36,19 +41,16 @@
         props: {
             keywords: Array,
         },
-        created() {
+        mounted() {
             this.refresh();
-            this.typeWriter();
+            setTimeout(this.typeWriter, Math.random() * 2000 + 800);
         },
         methods: {
             refresh() {
-                let length = 100;
+                let length = this.keywords[this.keyword].text.length * Math.max(Math.random() + 0.5, 1) * 800;
                 if (this.typeWriterIndex === 0 || this.typeWriterIndex === this.keywords[this.keyword].text.length) {
                     this.keyword = Math.floor(Math.random() * this.keywords.length);
                     this.typeWriterIndex = 0;
-                }
-                if (this.typeWriterIndex === this.keywords[this.keyword].text.length - 1) {
-                    length = this.keywords[this.keyword].text.length * Math.max(Math.random() + 0.5, 1) * 400;
                 }
                 setTimeout(this.refresh, length);
             },
