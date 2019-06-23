@@ -67,37 +67,19 @@
 </script>
 
 <style>
-    .gradient-no-switch {
-        flex: 1 1 auto;
-        transition: 0.5s;
-        background-size: 200% auto;
-    }
-
     .gunmetal {
-        background-image: linear-gradient(to top, #232F3F 0%, #232F3F 51%, #232F3F 100%);
-        background-color: #232F3F;
+        background-color: #232F3F !important;
     }
 
     .mellowapricot {
-        background-image: linear-gradient(to top, #FEBD69 0%, #FEBD69 51%, #FEBD69 100%);
-        background-color: #FEBD69;
+        background-color: #FEBD69 !important;
     }
 
     .charcoal {
-        background-image: linear-gradient(to top, #37475A 0%, #37475A 51%, #37475A 100%);
-        background-color: #37475A;
+        background-color: #37475A !important;
     }
 
     .white {
-        background-image: linear-gradient(to top, #FFFFFF 0%, #FFFFFF 51%, #FFFFFF 100%);
-        background-color: #FFFFFF;
-    }
-
-    .gradient-yellow {
-        background-image: linear-gradient(to top, #EDBA36 0%, #F1C964 51%, #F5D588 100%);
-    }
-
-    .gradient-grey {
-        background-image: linear-gradient(to top, #DADDE2 0%, #EFF1F3 51%, #E6E9EF 100%);
+        background-color: #FFFFFF !important;
     }
 </style>

@@ -23,7 +23,8 @@
                                 <br>
                                 <h3>{{category.title}}</h3>
                             </div>
-                            <v-checkbox v-else :disabled="!category.exclusive && disableRegularCategories"
+                            <v-checkbox v-else
+                                        :disabled="(!category.exclusive && disableRegularCategories)"
                                         v-model="selectedCategories"
                                         :label="category.name"
                                         color="orange"
@@ -43,7 +44,7 @@
                     <v-icon dark>{{ primaryDrawer.model ? 'arrow_back' : 'arrow_forward' }}</v-icon>
 
                 </v-btn>
-                <v-layout row wrap v-if="this.results.length > 8 && this.resultsReady">
+                <v-layout row wrap v-if="this.results.length > 8 && this.resultsReady && !this.scheduleRefresh">
                     <v-flex v-for="res in results.slice(0, 8)" v-bind:key="res.text" xs3>
                         <keyword-panel v-bind:keywords="results"></keyword-panel>
                     </v-flex>
@@ -59,8 +60,8 @@
                           style="margin-top: 200px;">
                     <v-layout row>
                         <v-progress-circular
-                                :size="70"
-                                :width="7"
+                                :size="100"
+                                :width="10"
                                 color="white"
                                 indeterminate
                         ></v-progress-circular>
@@ -92,10 +93,13 @@
         },
         data: () => ({
             disableRegularCategories: false,
+            disableAllCategories: false,
+            scheduleRefresh: false,
             resultsReady: false,
             results: [],
             queries: [],
             selectedCategories: [],
+            loadingProgress: 0,
             categories: [
                 {
                     name: 'Deals',
@@ -190,11 +194,65 @@
                 this.queries.push(letter);
             }
 
-            this.getHotSearches();
+            this.scheduleRefresh = true;
+            this.checkForRefresh();
         },
 
         methods: {
+            checkForRefresh() {
+                if (this.scheduleRefresh) {
+                    this.scheduleRefresh = false;
+                    this.getHotSearches();
+                }
+                setTimeout(this.checkForRefresh, 500);
+            },
             getHotSearches(category) {
+                if (this.disableAllCategories) {
+                    this.scheduleRefresh = true;
+                    return;
+                }
+
+
+                console.log("asdads");
+                if (this.selectedCategories.length > 0) {
+                    this.disableAllCategories = true;
+                }
+                this.results = [];
+                const urlBase = 'complete?client=amazon-search-ui&mkt=1';
+
+                this.resultsReady = false;
+                this.loadingProgress = 0;
+                let goalLength = this.selectedCategories.length * this.queries.length;
+                this.selectedCategories.slice().forEach(alias => {
+                    this.queries.forEach(query => {
+                        if (this.scheduleRefresh) {
+                            return;
+                        }
+                        const url = urlBase + '&search-alias=' + alias + '&q=' + query;
+                        axios.get(url).then(response => {
+                            const data = response.data;
+                            if (data[0] === query && data.length > 1) {
+                                data[1].slice(0, 1).forEach(res => {
+                                    if (!this.results.includes(res)) {
+                                        let category = this.categories.filter((c) => c.alias === alias)[0].name;
+                                        this.results.splice(Math.floor(Math.random() * this.results.length), 0, {
+                                            text: res,
+                                            category: category,
+                                            color: Math.floor(Math.random() * 10)
+                                        })
+                                    }
+                                });
+                            }
+                            ++this.loadingProgress;
+                            if (this.loadingProgress === goalLength) {
+                                this.resultsReady = true;
+                                this.disableAllCategories = false;
+                            }
+                        })
+                    });
+                });
+
+
                 if (category && category.exclusive) {
                     if (this.selectedCategories.includes(category.alias)) {
                         this.disableRegularCategories = true;
@@ -210,37 +268,6 @@
                         }
                     });
                 }
-
-
-                this.results = [];
-                const urlBase = 'complete?client=amazon-search-ui&mkt=1';
-
-                this.resultsReady = false;
-                let i = 0;
-                this.selectedCategories.forEach(alias => {
-                    this.queries.forEach(query => {
-                        const url = urlBase + '&search-alias=' + alias + '&q=' + query;
-                        axios.get(url).then(response => {
-                            ++i;
-                            if (i === this.selectedCategories.length * this.queries.length) {
-                                this.resultsReady = true;
-                            }
-                            const data = response.data;
-                            if (data[0] === query && data.length > 1) {
-                                data[1].slice(0, 1).forEach(res => {
-                                    if (!this.results.includes(res)) {
-                                        let category = this.categories.filter((c) => c.alias === alias)[0].name;
-                                        this.results.splice(Math.floor(Math.random() * this.results.length), 0, {
-                                            text: res,
-                                            category: category,
-                                            color: Math.floor(Math.random() * 10)
-                                        })
-                                    }
-                                });
-                            }
-                        })
-                    });
-                });
             }
         }
     }
