@@ -31,7 +31,7 @@
         </v-navigation-drawer>
 
         <v-content :class="dark ? 'main-dark' : 'main-light'">
-            <v-container fluid>
+            <v-container fluid style="height: 100%;">
                 <v-btn style="z-index: 2" fab light small color="white"
                        @click.stop="primaryDrawer.model = !primaryDrawer.model">
                     <v-icon dark>{{ primaryDrawer.model ? 'arrow_back' : 'arrow_forward' }}</v-icon>
@@ -152,12 +152,12 @@
                 {
                     name: 'Books',
                     alias: 'stripbooks-intl-ship',
-                    value: false
+                    value: true
                 },
                 {
                     name: 'Kindle Store',
                     alias: 'digital-text',
-                    value: false
+                    value: true
                 },
                 {
                     title: 'Music',
@@ -166,12 +166,12 @@
                 {
                     name: 'Music, CDs & Vinyl',
                     alias: 'music-intl-ship',
-                    value: true
+                    value: false
                 },
                 {
                     name: 'Digital Music',
                     alias: 'digital-music',
-                    value: true
+                    value: false
                 },
                 {
                     title: 'Video',
@@ -203,6 +203,7 @@
                 },
             ],
             dark: true,
+            cached: {},
             primaryDrawer: {
                 model: false,
             },
@@ -258,7 +259,6 @@
                     });
                 }
 
-
                 if (this.selectedCategories.length > 0) {
                     this.refreshOngoing = true;
                 }
@@ -267,6 +267,7 @@
                 this.loadingProgress = 0;   // keep track of finished API requests
 
                 const urlBase = 'complete?client=amazon-search-ui&mkt=1';
+                const takeResults = 2;
 
                 // determine how many requests should be made in total.
                 // If the number exceeds 100, only every other letter is taken
@@ -277,7 +278,29 @@
                 }
 
                 // For each category and for each letter, make an API request and add the best two result queries
-                this.selectedCategories.slice().forEach(alias => {
+                this.selectedCategories.slice().forEach((alias, i) => {
+                    // If we have retrieved this categorie earlier, use the cached results
+                    if (this.cached[alias]) {
+                        setTimeout(() => {
+                            // Push each of the cached results to the current result list
+                            this.cached[alias].forEach((a, i) => {
+                                if (i % takeResults === 0) {
+                                    ++this.loadingProgress;
+                                }
+                                this.results.splice(Math.floor(Math.random() * this.results.length), 0, a)
+                            });
+
+                            // Finalize results if there is no further category selected
+                            if (i === this.selectedCategories.length - 1) {
+                                this.resultsReady = true;
+                                this.refreshOngoing = false;
+                            }
+                        }, 1);
+                        return;
+                    }
+
+                    // This category has not been retrieved yet. Create a new cache and load the results
+                    this.cached[alias] = [];
                     this.queries.forEach((query, i) => {
                         if (this.scheduleRefresh || (takeHalf && i % 2 === 0)) {
                             return;
@@ -286,14 +309,16 @@
                         axios.get(url).then(response => {
                             const data = response.data;
                             if (data[0] === query && data.length > 1) {
-                                data[1].slice(0, 2).forEach(res => {
+                                data[1].slice(0, takeResults).forEach(res => {
                                     if (!this.results.includes(res)) {
-                                        let category = this.categories.filter((c) => c.alias === alias)[0].name;
-                                        this.results.splice(Math.floor(Math.random() * this.results.length), 0, {
+                                        const category = this.categories.filter((c) => c.alias === alias)[0].name;
+                                        const result = {
                                             text: res,
                                             category: category,
                                             color: Math.floor(Math.random() * 10)
-                                        })
+                                        };
+                                        this.results.splice(Math.floor(Math.random() * this.results.length), 0, result);
+                                        this.cached[alias].push(result);
                                     }
                                 });
                             }

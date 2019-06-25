@@ -5,7 +5,7 @@
                 target="_blank"
                 hover :light="(keywordsLocal[keyword].color % colors.length) < 1"
                 :dark="(keywordsLocal[keyword].color % colors.length) >= 1"
-                :class="'mx-auto elevation-0 ' + colors[keywordsLocal[keyword].color % colors.length]" max-width="400">
+                :class="'mx-auto elevation-0 ' + colors[keywordsLocal[keyword].color % colors.length]">
             <v-card-text style="min-height: 220px;" class="display-2 font-weight-bold">
                 {{ keywordsLocal[keyword].text.slice(0, typeWriterIndex) }}<span v-if="typeWriterIndex < keywordsLocal[keyword].text.length"
                     style="text-decoration: none; font-style: normal;"
@@ -15,7 +15,7 @@
             <v-card-actions>
                 <v-list-tile class="grow">
                     <v-layout align-center>
-                        <p class="text-xs-center title" style="margin-top: 80px;">In <b>{{ keywords[keyword].category
+                        <p class="text-xs-center title" style="margin-top: 80px;">In <b>{{ keywordsLocal[keyword].category
                             }}</b></p>
                     </v-layout>
                 </v-list-tile>
@@ -79,8 +79,8 @@
                     const speed = this.typeWriterBaseSpeed + (Math.random() - 0.5) * 200;
                     setTimeout(this.typeWriter, speed);
                 } else {
-                    // When the query is completed, wait 2 seconds to start with the next query
-                    setTimeout(this.refresh, 2500);
+                    // When the query is completed, wait 3 seconds to start with the next query
+                    setTimeout(this.refresh, 3000);
                 }
             }
         }
