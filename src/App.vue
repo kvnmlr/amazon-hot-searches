@@ -133,12 +133,12 @@
             selectedCategories: [],
             loadingProgress: 0,
             categories: [
-                {
+                /*{
                     name: 'Deals',
                     alias: 'deals-intl-ship',
                     value: false,
                     exclusive: true,
-                },
+                },*/
                 {
                     name: 'All Departments',
                     alias: 'aps',
@@ -214,7 +214,6 @@
             axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
             axios.defaults.headers.post['Content-Type'] = 'application/json;charset=utf-8';
             axios.defaults.headers.post['Access-Control-Allow-Origin'] = '*';
-            axios.defaults.baseURL = 'https://cors-anywhere.herokuapp.com/http://completion.amazon.com/search';
 
             this.selectedCategories = this.categories.filter(c => !c.divider && c.value).map(c => c.alias);
 
@@ -266,7 +265,7 @@
                 this.resultsReady = false;  // show the loading indicator
                 this.loadingProgress = 0;   // keep track of finished API requests
 
-                const urlBase = 'complete?client=amazon-search-ui&mkt=1';
+                const urlBase = 'https://cors-anywhere.herokuapp.com/http://completion.amazon.com/search/complete?client=amazon-search-ui&mkt=1';
                 const takeResults = 2;
 
                 // determine how many requests should be made in total.
@@ -306,9 +305,22 @@
                             return;
                         }
                         const url = urlBase + '&search-alias=' + alias + '&q=' + query;
-                        axios.get(url).then(response => {
-                            const data = response.data;
-                            if (data[0] === query && data.length > 1) {
+                        axios.get(url).then(async response => {
+                            let data = response.data;
+                            if (!data || data[0] !== query || data.length <= 1) {
+                                await axios.get('http://localhost:3000/api/amz' + '?search-alias=' + alias + '&q=' + query)
+                                    .then(function (response) {
+                                        // handle success
+                                        data = response.data;
+                                    })
+                                    .catch(function (error) {
+                                        // handle error
+                                        console.log(error);
+                                        data = undefined;
+                                    })
+                            }
+                            if (data.length) {
+                                axios.post('http://localhost:3000/api/amz' + '?search-alias=' + alias + '&q=' + query, data);
                                 data[1].slice(0, takeResults).forEach(res => {
                                     if (!this.results.includes(res)) {
                                         const category = this.categories.filter((c) => c.alias === alias)[0].name;
@@ -322,6 +334,7 @@
                                     }
                                 });
                             }
+
                             ++this.loadingProgress;
 
                             // Check if all requests are done
