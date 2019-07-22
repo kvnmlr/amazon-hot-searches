@@ -306,9 +306,10 @@
                         }
                         const url = urlBase + '&search-alias=' + alias + '&q=' + query;
                         axios.get(url).then(async response => {
-                            let data = response.data;
+                            let data = undefined; // response.data;
                             if (!data || data[0] !== query || data.length <= 1) {
-                                await axios.get('http://localhost:3000/api/amz' + '?search-alias=' + alias + '&q=' + query)
+                                axios.defaults.port = 3000;
+                                await axios.get('https://kvnmlr.uber.space/api/amz' + '?search-alias=' + alias + '&q=' + query)
                                     .then(function (response) {
                                         // handle success
                                         data = response.data;
@@ -320,7 +321,10 @@
                                     })
                             }
                             if (data.length) {
-                                axios.post('http://localhost:3000/api/amz' + '?search-alias=' + alias + '&q=' + query, data);
+                                await axios.post('https://kvnmlr.uber.space/api/amz' + '?search-alias=' + alias + '&q=' + query, data)
+                                    .catch((err) => {
+                                        console.log(err)
+                                    });
                                 data[1].slice(0, takeResults).forEach(res => {
                                     if (!this.results.includes(res)) {
                                         const category = this.categories.filter((c) => c.alias === alias)[0].name;
